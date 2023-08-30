@@ -1,6 +1,4 @@
 use std::fs;
-use std::path::Path;
-use std::os::macos::fs::MetadataExt;
 
 use super::shared::ProgramArgs;
 
@@ -116,7 +114,7 @@ fn dive_folder(path: &str, depth: i32) -> FileDiveResult {
                         }
                         else {
                             let metadata = fs::metadata(dir_info.path().as_path()).unwrap();
-                            file_dive_result.total_size += metadata.st_size();
+                            file_dive_result.total_size += metadata.len();
                             file_dive_result.total_files += 1;
                         }
                     },

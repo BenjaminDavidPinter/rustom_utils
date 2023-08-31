@@ -94,11 +94,10 @@ pub fn scan_cache(args : Vec<ProgramArgs>) {
     let top_5_offenders = &dirs[0..5];
 
     for offender in top_5_offenders {
-        println!("{:.<70}{:.<25}{} files",
-
+        println!("{:.<70}{:.<25}{}",
         offender.file_name,
         format!("{} bytes", offender.total_size),
-        offender.total_files);
+        format!("{} files", offender.total_files));
     }
 }
 

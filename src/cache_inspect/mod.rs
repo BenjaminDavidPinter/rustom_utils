@@ -51,7 +51,7 @@ impl FileDiveResult{
         ...well it is the recursive function
 
         There's probably a much more elegant way to handle the shared code.
-
+Í›44
 */
 pub fn scan_cache(args : Vec<ProgramArgs>) {
     let cache_dirs_result = fs::read_dir(CACHE_PATH);
@@ -69,7 +69,6 @@ pub fn scan_cache(args : Vec<ProgramArgs>) {
                 //  function
                 match dir {
                     Ok(dir_info) => {
-                        print!("{:?} - ", dir_info.file_name());
 
                         /*
                         It is finally at this point that we have reached the folders within
@@ -90,7 +89,17 @@ pub fn scan_cache(args : Vec<ProgramArgs>) {
         _ => print!("Error")
     };
 
-    println!("{:#?}", dirs);
+
+    dirs.sort_by(|a,b| b.total_size.cmp(&a.total_size));
+    let top_5_offenders = &dirs[0..5];
+
+    for offender in top_5_offenders {
+        println!("{:.<70}{:.<25}{} files",
+
+        offender.file_name,
+        format!("{} bytes", offender.total_size),
+        offender.total_files);
+    }
 }
 
 //So that means, in here we are going to do nearly the same thing, but

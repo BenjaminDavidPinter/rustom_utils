@@ -23,7 +23,7 @@ impl FileDiveResult {
     }
 }
 
-pub fn scan_cache(args: Vec<ProgramArgs>) {
+pub fn inspect(args: Vec<ProgramArgs>) {
     let mut scan_path = String::new();
     let mut debug_mode = false;
     for arg in args {

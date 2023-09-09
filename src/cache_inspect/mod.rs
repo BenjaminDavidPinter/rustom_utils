@@ -1,5 +1,6 @@
 use std::fs;
 
+
 use super::shared::ProgramArgs;
 
 //TODO: Make this relative somehow?
@@ -23,7 +24,18 @@ impl FileDiveResult {
 }
 
 pub fn scan_cache(args: Vec<ProgramArgs>) {
-    let cache_dirs_result = fs::read_dir(CACHE_PATH);
+    let mut scan_path = String::new();
+    let mut debug_mode = false;
+    for arg in args {
+        match arg {
+            ProgramArgs::Debug => debug_mode = true,
+           ProgramArgs::Path(val) => scan_path = val,
+        };
+    }
+
+    if debug_mode { println!("\r\n[SCAN PATH]: {}", scan_path) };
+
+    let cache_dirs_result = fs::read_dir(&scan_path);
     let mut dirs = Vec::new();
     if let Ok(cache_dirs) = cache_dirs_result {
         for dir in cache_dirs {
@@ -40,7 +52,14 @@ pub fn scan_cache(args: Vec<ProgramArgs>) {
     }
 
     dirs.sort_by(|a, b| b.total_size.cmp(&a.total_size));
-    let top_5_offenders = &mut dirs[0..5];
+
+    let mut max_dirs = dirs.len();
+
+    if max_dirs > 5 {
+        max_dirs = 5;
+    }
+
+    let top_5_offenders = &mut dirs[0..max_dirs];
 
     top_5_offenders.sort_by(|a, b| b.file_name.len().cmp(&a.file_name.len()));
     let longest_file_name = top_5_offenders.first().unwrap().file_name.len() + 3;
@@ -48,7 +67,7 @@ pub fn scan_cache(args: Vec<ProgramArgs>) {
     top_5_offenders.sort_by(|a, b| b.total_size.cmp(&a.total_size));
 
     println!("");
-    println!("{:=^100}", "Top Cache Offenders");
+    println!("{:=^100}", scan_path);
     for offender in top_5_offenders {
         println!(
             "{:.<width$}{:.<25}{}",
@@ -59,6 +78,7 @@ pub fn scan_cache(args: Vec<ProgramArgs>) {
         );
     }
     println!("{:=^100}", "=");
+    println!("");
 }
 
 fn dive_folder(path: &str, depth: i32) -> FileDiveResult {

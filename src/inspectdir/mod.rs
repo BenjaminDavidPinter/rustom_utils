@@ -1,10 +1,5 @@
-use std::fs;
-
-
 use super::shared::ProgramArgs;
-
-//TODO: Make this relative somehow?
-const CACHE_PATH: &str = "/Users/benjaminpinter/Library/Caches";
+use std::fs;
 
 #[derive(Debug)]
 struct FileDiveResult {
@@ -15,11 +10,11 @@ struct FileDiveResult {
 
 impl FileDiveResult {
     pub fn new(file: String) -> FileDiveResult {
-        return FileDiveResult {
+        FileDiveResult {
             total_size: 0,
             total_files: 0,
             file_name: file,
-        };
+        }
     }
 }
 
@@ -29,24 +24,19 @@ pub fn inspect(args: Vec<ProgramArgs>) {
     for arg in args {
         match arg {
             ProgramArgs::Debug => debug_mode = true,
-           ProgramArgs::Path(val) => scan_path = val,
+            ProgramArgs::Path(val) => scan_path = val,
         };
     }
 
-    if debug_mode { println!("\r\n[SCAN PATH]: {}", scan_path) };
+    debug_print(debug_mode, format!("{:<20}{}", "[scan_path]:", scan_path));
 
     let cache_dirs_result = fs::read_dir(&scan_path);
     let mut dirs = Vec::new();
     if let Ok(cache_dirs) = cache_dirs_result {
-        for dir in cache_dirs {
-            if let Ok(dir_info) = dir {
-                if dir_info.path().as_path().is_dir() {
-                    let this_path = dir_info.path();
-                    dirs.push(dive_folder(
-                        this_path.as_path().as_os_str().to_str().unwrap(),
-                        1,
-                    ));
-                }
+        for dir_info in cache_dirs.into_iter().flatten() {
+            if dir_info.path().as_path().is_dir() {
+                let this_path = dir_info.path();
+                dirs.push(dive_folder(this_path.as_path().as_os_str().to_str().unwrap()));
             }
         }
     }
@@ -54,6 +44,7 @@ pub fn inspect(args: Vec<ProgramArgs>) {
     dirs.sort_by(|a, b| b.total_size.cmp(&a.total_size));
 
     let mut max_dirs = dirs.len();
+    debug_print(debug_mode, format!("{:<20}{}", "[max_dirs]:", max_dirs));
 
     if max_dirs > 5 {
         max_dirs = 5;
@@ -66,41 +57,64 @@ pub fn inspect(args: Vec<ProgramArgs>) {
 
     top_5_offenders.sort_by(|a, b| b.total_size.cmp(&a.total_size));
 
-    println!("");
+    println!();
     println!("{:=^100}", scan_path);
     for offender in top_5_offenders {
         println!(
             "{:.<width$}{:.<25}{}",
             offender.file_name,
-            format!("{} bytes", offender.total_size),
+            format!("{}", to_friendly_byte_name(offender.total_size)),
             format!("{} files", offender.total_files),
             width = longest_file_name
         );
     }
     println!("{:=^100}", "=");
-    println!("");
+    println!();
 }
 
-fn dive_folder(path: &str, depth: i32) -> FileDiveResult {
+fn dive_folder(path: &str) -> FileDiveResult {
     let mut file_dive_result = FileDiveResult::new(String::from(path));
     let cache_dirs_result = fs::read_dir(path);
 
     if let Ok(cache_dirs) = cache_dirs_result {
-        for dir in cache_dirs {
-            if let Ok(dir_info) = dir {
-                if dir_info.path().as_path().is_dir() {
-                    let this_path = dir_info.path();
-                    let nested_result =
-                        dive_folder(this_path.as_path().to_str().unwrap(), depth + 1);
-                    file_dive_result.total_size += nested_result.total_size;
-                    file_dive_result.total_files += nested_result.total_files;
-                } else {
-                    let metadata = fs::metadata(dir_info.path().as_path()).unwrap();
-                    file_dive_result.total_size += metadata.len();
-                    file_dive_result.total_files += 1;
-                }
+        for dir_info in cache_dirs.into_iter().flatten() {
+            if dir_info.path().as_path().is_dir() {
+                let this_path = dir_info.path();
+                let nested_result =
+                    dive_folder(this_path.as_path().to_str().unwrap());
+                file_dive_result.total_size += nested_result.total_size;
+                file_dive_result.total_files += nested_result.total_files;
+            } else {
+                let metadata = fs::metadata(dir_info.path().as_path()).unwrap();
+                file_dive_result.total_size += metadata.len();
+                file_dive_result.total_files += 1;
             }
         }
     }
     file_dive_result
+}
+
+fn debug_print(debug_mode: bool, message: String) {
+    if debug_mode {
+        println!("{}",message);
+    }
+}
+
+fn to_friendly_byte_name(total_bytes: u64) -> String {
+    let mut iterations = 0;
+    let mut final_value = total_bytes;
+
+    while final_value > 1024 {
+        final_value /= 1024;
+        iterations += 1;
+    }
+
+    match iterations {
+        0 => format!("{} b", final_value),
+        1 => format!("{} kb", final_value, ),
+        2 => format!("{} mb", final_value, ),
+        3 => format!("{} gb", final_value, ),
+        4 => format!("{} tb", final_value),
+        _ => panic!("Too large to calculate")
+    }
 }

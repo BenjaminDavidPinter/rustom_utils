@@ -8,6 +8,6 @@ fn main() {
 
     match program_select {
         ProgramSelect::Inspectdir => inspectdir::inspect(program_args),
-        _ => panic!("Unsupported program")
+        _ => panic!("Unsupported program"),
     };
 }

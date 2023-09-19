@@ -1,5 +1,5 @@
 use super::shared::ProgramArgs;
-use std::fs;
+use std::{fs, env, path::PathBuf};
 
 #[derive(Debug)]
 struct FileDiveResult {
@@ -24,7 +24,11 @@ pub fn inspect(args: Vec<ProgramArgs>) {
     for arg in args {
         match arg {
             ProgramArgs::Debug => debug_mode = true,
-            ProgramArgs::Path(val) => scan_path = val,
+            ProgramArgs::Path(val) => {
+                let mut dir_buf = PathBuf::new();
+                dir_buf.push(val);
+                scan_path = get_path(dir_buf);
+            }
         };
     }
 
@@ -117,4 +121,20 @@ fn to_friendly_byte_name(total_bytes: u64) -> String {
         4 => format!("{} tb", final_value),
         _ => panic!("Too large to calculate")
     }
+}
+
+
+fn get_path(dir: PathBuf) -> String {
+    if dir.is_absolute() {
+        return String::from(dir.to_str().unwrap());
+    } else {
+        let pwd = env::current_dir().unwrap().join(dir);
+        return String::from(pwd.to_str().unwrap());
+    }
+}
+
+#[cfg(test)]
+pub mod inspectdir_tests {
+    use super::*;
+
 }

@@ -11,12 +11,5 @@ and images on my system in order to give Mac that 'snappy feel'.
 To hell with this; Even if I have to sacrifice a bit of that snap, I will create my own command line utils
 for managing this computer.
 
-# CacheInspect
-First up, we have this folder which caches a bunch of 'stuff' which, I believe, makes second and beyond loads of that
-subsequent asset significantly faster. Problem is; These cache entries are created upon first opening the program.
-
-I believe this means (and my assuption may be wrong here), that downloading a program to try, and using it once
-will generate one of the caches for that program. No good.
-
-CacheInspect should simply give us insight into the Mac OSX application cache. I don't even really care about deleting
-things while I'm there, just let me know if there's a bloated folder, and I'll go delete it myself.
+# Inspectdir
+Recurisvely dig through a folder, and report back # of files + total size of folder.
